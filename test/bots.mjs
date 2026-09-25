@@ -14,7 +14,7 @@ ws.on('message', raw => {
   if (m.t === 'snap' && pos) ws.send(JSON.stringify({ t: 'st', x: pos.x, y: pos.y, z: pos.z, yaw: 0, pitch: 0, g: 1 }));
   if (m.t === 'end') {
     console.log(`map ${map} diff ${diff}:`, JSON.stringify(c), 'winner', m.winner.name, m.winner.score);
-    console.log(m.standings.map(s => `${s.name}:${s.score}/${s.deaths} ${s.acc}%`).join('  '));
+    console.log(m.standings.map(s => `${s.name}:${s.score}/${s.deaths}`).join('  '));
     process.exit(0);
   }
 });

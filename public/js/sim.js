@@ -7,7 +7,7 @@ export const PR = 0.38;            // body radius
 export const PH = 1.66, PHC = 1.18;// standing / crouching height
 export const STEP = 0.47;          // highest ledge you walk up without jumping
 export const EYE = 1.42, EYEC = 0.98;
-export const HOPPER = 20, RESERVE_MAX = 100, START_RESERVE = 40, CRATE_AMMO = 40;
+export const HOPPER = 20, RESERVE_MAX = 100, START_RESERVE = 60, CRATE_AMMO = 40;
 export const RELOAD_T = 1.6, FIRE_GAP = 0.13, HP = 100, BODY_DMG = 34, HEAD_DMG = 60;
 export const RESPAWN_T = 4, SHIELD_T = 2;
 

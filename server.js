@@ -33,9 +33,9 @@ const PAINT = ['#ff2d55', '#ff9500', '#ffd60a', '#34c759', '#00c7be', '#0a84ff',
 const rpaint = () => PAINT[Math.floor(Math.random() * PAINT.length)];
 const BOTS = [['RICK', '#e8452c'], ['GUS', '#8a5a2b'], ['SUNNY', '#ffc53a'], ['VIOLET', '#9b59ff'], ['PICKLE', '#7bd13b'], ['DOTTIE', '#ff6fb5'], ['NOODLE', '#f2e2b8'], ['BLOBBY', '#3ad0ff']];
 const DIFF = [
-  { name: 'Easy', react: 0.9, err: 0.075, gap: 0.6, lead: 0, drop: 0.55, strafe: 0.35, view: 26, cover: 0.15, burst: 2 },
-  { name: 'Normal', react: 0.45, err: 0.035, gap: 0.3, lead: 0.6, drop: 0.92, strafe: 0.7, view: 38, cover: 0.5, burst: 4 },
-  { name: 'Hard', react: 0.2, err: 0.014, gap: 0.17, lead: 1, drop: 1, strafe: 1, view: 60, cover: 0.85, burst: 6 },
+  { name: 'Easy', react: 1.1, err: 0.095, gap: 0.7, lead: 0, drop: 0.5, strafe: 0.3, view: 24, cover: 0.15, burst: 2 },
+  { name: 'Normal', react: 0.58, err: 0.046, gap: 0.36, lead: 0.5, drop: 0.88, strafe: 0.65, view: 36, cover: 0.5, burst: 3 },
+  { name: 'Hard', react: 0.27, err: 0.019, gap: 0.2, lead: 0.9, drop: 1, strafe: 1, view: 55, cover: 0.85, burst: 5 },
 ];
 const NAV = MAPS.map(m => S.buildNav(m));
 const rooms = new Map();
@@ -162,7 +162,7 @@ function endMatch(r) {
     champion = { name: w.name, color: w.color, skin: w.skin, score: w.score, map: MAPS[r.settings.map].name, at: Date.now() };
     fs.writeFile(CHAMP_FILE, JSON.stringify(champion), () => { });
   }
-  bcast(r, { t: 'end', winner: r.lastWinner, standings: st.map(p => ({ id: p.id, name: p.name, color: p.color, bot: p.bot, score: p.score, deaths: p.deaths, acc: p.shots ? Math.round(p.hits / p.shots * 100) : 0 })) });
+  bcast(r, { t: 'end', winner: r.lastWinner, standings: st.map(p => ({ id: p.id, name: p.name, color: p.color, bot: p.bot, score: p.score, deaths: p.deaths })) });
 }
 
 function paintOut(r, tg, by, col) {

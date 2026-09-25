@@ -623,7 +623,7 @@ function showEnd(m) {
   unlock();
   const won = m.winner && m.winner.id === myId;
   $('end-title').innerHTML = m.winner ? `👑 <span style="color:${esc(m.winner.color)}">${esc(m.winner.name)}</span> WINS!` : 'MATCH OVER';
-  $('end-list').innerHTML = `<div class="stand head"><span>#</span><span>GOOGLY</span><span class="r">TAGS</span><span class="r">PAINTED</span><span class="r acc">ACCURACY</span></div>` + m.standings.map((s, i) => `<div class="stand ${i === 0 ? 'first' : ''}"><span>${i + 1}</span><span class="n"><span class="dot" style="background:${esc(s.color)}"></span>${esc(s.name)}${s.bot ? ' <small>(CPU)</small>' : ''}${s.id === myId ? ' <small>(you)</small>' : ''}</span><span class="r">${s.score}</span><span class="r">${s.deaths}</span><span class="r acc">${s.acc}%</span></div>`).join('');
+  $('end-list').innerHTML = `<div class="stand head"><span>#</span><span>GOOGLY</span><span class="r">TAGS</span><span class="r">PAINTED</span></div>` + m.standings.map((s, i) => `<div class="stand ${i === 0 ? 'first' : ''}"><span>${i + 1}</span><span class="n"><span class="dot" style="background:${esc(s.color)}"></span>${esc(s.name)}${s.bot ? ' <small>(CPU)</small>' : ''}${s.id === myId ? ' <small>(you)</small>' : ''}</span><span class="r">${s.score}</span><span class="r">${s.deaths}</span></div>`).join('');
   const un = $('end-unlock'); un.classList.add('hidden');
   if (won) {
     const before = unlocked().length;

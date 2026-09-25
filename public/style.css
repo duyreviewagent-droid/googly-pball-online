@@ -100,7 +100,7 @@ h2 { font-family: "Futura", "Arial Black", sans-serif; color: #7dff9a; margin: 0
 #clickto { position: fixed; inset: 0; z-index: 8; display: flex; align-items: center; justify-content: center; cursor: pointer; background: #0005; }
 #clickto div { font-family: Futura, "Arial Black", sans-serif; font-size: 44px; text-shadow: 4px 4px #000; text-align: center; } #clickto small { display: block; font-family: "Avenir Next", sans-serif; font-size: 16px; }
 #end-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0; }
-.stand { display: grid; grid-template-columns: 34px 1fr 70px 70px 70px; align-items: center; gap: 8px; padding: 7px 12px; font-weight: 800; background: #ffffff0d; border-radius: 10px; text-align: left; }
+.stand { display: grid; grid-template-columns: 34px 1fr 80px 80px; align-items: center; gap: 8px; padding: 7px 12px; font-weight: 800; background: #ffffff0d; border-radius: 10px; text-align: left; }
 .stand.first { background: linear-gradient(90deg, #ffd84a44, #ffd84a11); border: 1px solid #ffd84a; }
 .stand .n { display: flex; gap: 8px; align-items: center; } .stand .r { text-align: right; } .stand.head { background: none; font-size: 11px; opacity: .7; letter-spacing: 1px; }
 .help p { text-align: left; line-height: 1.45; }
@@ -117,7 +117,7 @@ body.mobile #mini { top: 64px; } body.mobile #chatbox { display: none; }
 @media (max-width: 720px) {
   .lobbycols { grid-template-columns: 1fr; } .maps { grid-template-columns: 1fr 1fr 1fr; } .mapc small { display: none; }
   .bigcode { font-size: 40px; } #mini { font-size: 11px; min-width: 120px; } #paintbar { width: 150px; } #ammo b { font-size: 32px; }
-  .stand { grid-template-columns: 26px 1fr 50px 50px; } .stand .acc { display: none; }
+  .stand { grid-template-columns: 26px 1fr 56px 56px; }
   button.big { font-size: 18px; padding: 12px 22px; }
 }
 /* title: card on the left, your googly posing on the right */
