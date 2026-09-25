@@ -73,6 +73,8 @@
       <div>
         <div class="label">MATCH</div>
         <div id="lb-maps" class="maps small"></div>
+        <div id="lb-summary" class="summary hidden"></div>
+        <div id="lb-hostctl">
         <div class="grid2">
           <label>CPUs <select id="lb-cpus"><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option></select></label>
           <label>Difficulty <select id="lb-diff"><option value="0">Easy</option><option value="1">Normal</option><option value="2">Hard</option></select></label>
@@ -80,6 +82,7 @@
           <label>First to <select id="lb-score"><option value="10">10 tags</option><option value="15">15 tags</option><option value="25">25 tags</option><option value="0">No limit</option></select></label>
         </div>
         <label class="chk"><input type="checkbox" id="lb-pub"> Show in the public lobby list</label>
+        </div>
         <div id="lb-wait" class="tiny"></div>
       </div>
     </div>
@@ -100,7 +103,7 @@
   <div id="center"></div>
   <div id="prompt"></div>
   <canvas id="paintov"></canvas>
-  <div id="dead" class="hidden"><h2 id="dead-by">PAINTED!</h2><p id="dead-t">Back in 4…</p></div>
+  <div id="dead" class="hidden"><h2 id="dead-by">PAINTED!</h2><p id="dead-t">back in 3…</p></div>
   <div id="board" class="hidden"></div>
   <div id="chatbox"><div id="log"></div><form id="chatform" class="hidden"><input id="chatin" maxlength="120" placeholder="Chat… (Enter to send, Esc to cancel)" autocomplete="off"></form></div>
   <div id="keys" class="tiny">WASD move · Mouse aim · Click shoot · Right-click zoom · R reload · Space jump · C crouch · Shift sprint · Tab scores · T chat · Esc menu</div>
@@ -141,7 +144,7 @@
 <section id="scr-help" class="screen hidden">
   <div class="card wide help">
     <h2>HOW TO PLAY</h2>
-    <p><b>Paint everyone.</b> Every paintball is a random colour. Three body hits (or two to the head) and a googly is <b>painted out</b>: they turn completely into the colour of the last ball, flop over, and come back 4 seconds later.</p>
+    <p><b>Paint everyone.</b> Every paintball is a random colour. Three body hits (or two to the head) and a googly is <b>painted out</b>: they turn completely into the colour of the last ball, flop over, and you watch whoever painted you for 3 seconds before you come back.</p>
     <p><b>Ammo is real.</b> Your hopper holds 20 balls. Press <b>R</b> to reload from your reserve pods. Out of pods? Run to a yellow-ringed <b>PAINT +40</b> crate on the map, then it takes 14 seconds to refill.</p>
     <p><b>Hide.</b> Bunkers, containers, logs and walls stop paintballs. <b>C</b> to crouch behind low cover. Paintballs drop over distance — aim a little high far away.</p>
     <p><b>Win skins.</b> The winner of the last match wears <b>Champion Gold</b> with a crown and a gold marker. Every match you win unlocks a new skin.</p>

@@ -125,6 +125,11 @@ function drawLobby() {
   $('lb-maps').classList.toggle('locked', !h);
   for (const [id, k] of [['lb-cpus', 'cpus'], ['lb-diff', 'diff'], ['lb-time', 'time'], ['lb-score', 'score']]) { $(id).value = String(s[k]); $(id).disabled = !h; }
   $('lb-pub').checked = room.public; $('lb-pub').disabled = !h;
+  // only the host sees the controls; everyone else gets a read-only summary
+  $('lb-hostctl').classList.toggle('hidden', !h);
+  $('lb-summary').classList.toggle('hidden', h);
+  const tl = { 120: '2 min', 240: '4 min', 420: '7 min', 600: '10 min' }[s.time] || Math.round(s.time / 60) + ' min';
+  $('lb-summary').innerHTML = `Map: <b>${esc(MAPS[s.map].name)}</b><br>CPUs: <b>${s.cpus}</b> (${['Easy', 'Normal', 'Hard'][s.diff]})<br>Length: <b>${tl}</b> · First to: <b>${s.score ? s.score + ' tags' : 'no limit'}</b><br>${room.public ? 'Public lobby' : 'Private lobby'} · only the host can change these`;
   $('lb-start').classList.toggle('hidden', !h);
   $('lb-start').textContent = room.state === 'lobby' ? 'START MATCH' : 'MATCH RUNNING…';
   $('lb-start').disabled = room.state !== 'lobby';
@@ -284,7 +289,7 @@ function onGameMsg(m) {
       sfx.out([e.x, e.y + 1, e.z], m.tg === myId || m.by === myId);
       const col = `<b style="color:${esc(m.col)}">●</b>`;
       feed(m.by && m.by !== m.tg ? `${nameSpan(m.by)} ${col} painted ${nameSpan(m.tg)}` : `${nameSpan(m.tg)} ${col} got painted`);
-      if (m.tg === myId) { me.alive = false; me.deadT = S.RESPAWN_T; $('dead').classList.remove('hidden'); $('dead-by').innerHTML = m.by && m.by !== myId ? `PAINTED BY ${nameSpan(m.by)}` : 'PAINTED!'; $('dead-by').style.color = m.col; paintOv.flood(m.col); }
+      if (m.tg === myId) { me.alive = false; me.deadT = S.RESPAWN_T; me.killer = m.by && m.by !== myId ? m.by : 0; $('dead').classList.remove('hidden'); $('dead-by').innerHTML = m.by && m.by !== myId ? `PAINTED BY ${nameSpan(m.by)}` : 'PAINTED!'; $('dead-by').style.color = m.col; paintOv.flood(m.col); }
       if (m.by === myId && m.tg !== myId) { center(`YOU PAINTED ${e.name}!`, 1400, m.col); sfx.tagged(); }
       break;
     }
@@ -535,12 +540,15 @@ function updateEnts(dt) {
 
 // ------------------------------------------------------------------ camera + HUD
 function updateCamera(dt) {
-  const eyeH = me.crouch ? S.EYEC + 0.12 : S.EYE + 0.1;
-  const pivot = V.set(me.x, me.y + eyeH, me.z);
-  const cp = Math.cos(me.pitch), fwd = camFwd.set(-Math.sin(me.yaw) * cp, Math.sin(me.pitch), -Math.cos(me.yaw) * cp);
-  const right = V2.set(Math.cos(me.yaw), 0, -Math.sin(me.yaw));
-  const ak = me.aimK, dead = !me.alive;
-  const back = dead ? 4.5 : 2.6 - 1.25 * ak, side = dead ? 0 : 0.62 - 0.2 * ak, up = dead ? 1.2 : 0.2;
+  // painted out: ride over the shoulder of whoever got you until you respawn
+  const k = !me.alive && me.killer ? G.ents.get(me.killer) : null, spec = k && k.alive;
+  const src = spec ? { x: k.x, y: k.y, z: k.z, yaw: k.yaw, pitch: Math.max(-0.5, Math.min(0.5, k.pitch)) * 0.6 - 0.12, crouch: !!(k.flags & 1) } : me;
+  const eyeH = src.crouch ? S.EYEC + 0.12 : S.EYE + 0.1;
+  const pivot = V.set(src.x, src.y + eyeH, src.z);
+  const cp = Math.cos(src.pitch), fwd = camFwd.set(-Math.sin(src.yaw) * cp, Math.sin(src.pitch), -Math.cos(src.yaw) * cp);
+  const right = V2.set(Math.cos(src.yaw), 0, -Math.sin(src.yaw));
+  const ak = spec ? 0 : me.aimK, dead = !me.alive && !spec;
+  const back = spec ? 3.0 : dead ? 4.5 : 2.6 - 1.25 * ak, side = spec ? 0.55 : dead ? 0 : 0.62 - 0.2 * ak, up = spec ? 0.35 : dead ? 1.2 : 0.2;
   const base = pivot.clone().addScaledVector(right, side * 0.5);
   const want = base.clone().addScaledVector(right, side * 0.5).addScaledVector(fwd, -back); want.y += up;
   const hit = S.segMap(G.map, base.x, base.y, base.z, want.x, want.y, want.z);
@@ -564,7 +572,7 @@ const paintOv = {
   clear() { this.blobs = []; this.draw(); },
   hit(col, head) { for (let i = 0; i < (head ? 3 : 2); i++) this.blobs.push({ x: Math.random(), y: Math.random() * 0.8, r: 0.06 + Math.random() * 0.1, col, a: 0.8, drip: Math.random() * 0.1 }); this.draw(); },
   flood(col) { for (let i = 0; i < 7; i++) { const a = Math.random() * 6.283, d = 0.32 + Math.random() * 0.2; this.blobs.push({ x: 0.5 + Math.cos(a) * d, y: 0.5 + Math.sin(a) * d, r: 0.1 + Math.random() * 0.12, col, a: 0.75, drip: 0.1 }); } this.draw(); },
-  update(dt) { if (!this.blobs.length) return; for (const b of this.blobs) { b.a -= dt * (me.alive ? 0.22 : 0.05); b.drip += dt * 0.02; } this.blobs = this.blobs.filter(b => b.a > 0); this.draw(); },
+  update(dt) { if (!this.blobs.length) return; for (const b of this.blobs) { b.a -= dt * (me.alive ? 0.22 : 0.35); b.drip += dt * 0.02; } this.blobs = this.blobs.filter(b => b.a > 0); this.draw(); },
   draw() {
     const c = this.cv, w = c.width = innerWidth / 2, h = c.height = innerHeight / 2, g = c.getContext('2d');
     g.clearRect(0, 0, w, h);
@@ -600,7 +608,7 @@ function updateHUD(dt) {
     else if (me.hopper <= 4 && me.reserve > 0 && me.reloadT <= 0) pr = 'Press R to reload';
   }
   $('prompt').textContent = pr;
-  if (!me.alive) $('dead-t').textContent = me.deadT > 0 ? `Back in ${Math.ceil(me.deadT)}…` : 'Respawning…';
+  if (!me.alive) { const k = me.killer && G.ents.get(me.killer); $('dead-t').textContent = (k && k.alive ? `Watching ${k.name} · ` : '') + (me.deadT > 0 ? `back in ${Math.ceil(me.deadT)}…` : 'respawning…'); }
   // crosshair spread
   const s = 6 + spreadNow() * 420, ch = $('xhair').children;
   ch[0].style.top = -s - 9 + 'px'; ch[1].style.top = s + 'px'; ch[2].style.left = -s - 9 + 'px'; ch[3].style.left = s + 'px';
