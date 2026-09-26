@@ -17,16 +17,20 @@
 <!-- title -->
 <section id="scr-title" class="screen">
   <div class="card">
+    <div class="tcol">
     <h1><span class="g">GOOGLY</span> <span class="p">P-BALL</span></h1>
     <p class="sub">Paintball for googlies · up to 8 players · 3 arenas</p>
     <div id="invite" class="banner hidden"></div>
     <input id="nm" maxlength="14" placeholder="Your name" autocomplete="off">
     <div id="swatches"></div>
+    </div>
+    <div class="tcol">
     <div class="label">SKIN <small id="skinnote"></small></div>
     <div id="skins"></div>
-    <div class="row"><button id="b-online" class="big green">PLAY ONLINE</button><button id="b-cpu" class="big purple">PLAY SOLO<small style="display:block;font-size:12px;opacity:.85">vs CPUs</small></button></div>
-    <div class="row"><button id="b-fs" class="grey">⛶ Full screen</button><button id="b-music" class="grey">♪ Music</button><button id="b-sfx" class="grey">🔊 Sound</button><button id="b-help" class="grey">? How to play</button></div>
+    <div class="row play"><button id="b-online" class="big green">PLAY ONLINE</button><button id="b-cpu" class="big purple">PLAY SOLO<small style="display:block;font-size:12px;opacity:.85">vs CPUs</small></button></div>
+    <div class="row opts"><button id="b-fs" class="grey">⛶ Full screen</button><button id="b-music" class="grey">♪ Music</button><button id="b-sfx" class="grey">🔊 Sound</button><button id="b-help" class="grey">? How to play</button></div>
     <div id="champ" class="champ hidden"></div>
+    </div>
   </div>
 </section>
 
@@ -41,7 +45,7 @@
       <label>Match length <select id="cpu-t"><option value="120">2 min</option><option value="240" selected>4 min</option><option value="420">7 min</option><option value="600">10 min</option></select></label>
       <label>First to <select id="cpu-s"><option value="10">10 tags</option><option value="15" selected>15 tags</option><option value="25">25 tags</option><option value="0">No limit</option></select></label>
     </div>
-    <div class="row"><button id="cpu-go" class="big green">START</button><button class="back grey">BACK</button></div>
+    <div class="row actions"><button id="cpu-go" class="big green">START</button><button class="back grey">BACK</button></div>
     <p class="tiny">You can still invite friends into a CPU match: the lobby code shows after the match.</p>
   </div>
 </section>
@@ -87,7 +91,7 @@
       </div>
     </div>
     <div id="lb-chat"><div id="lb-log"></div><form id="lb-form"><input id="lb-msg" maxlength="120" placeholder="Say something…" autocomplete="off"><button class="grey">Send</button></form></div>
-    <div class="row"><button id="lb-start" class="big green">START MATCH</button><button id="lb-leave" class="grey">LEAVE</button></div>
+    <div class="row actions"><button id="lb-start" class="big green">START MATCH</button><button id="lb-leave" class="grey">LEAVE</button></div>
   </div>
 </section>
 
@@ -105,7 +109,7 @@
   <canvas id="paintov"></canvas>
   <div id="dead" class="hidden"><h2 id="dead-by">PAINTED!</h2><p id="dead-t">back in 3…</p></div>
   <div id="board" class="hidden"></div>
-  <div id="chatbox"><div id="log"></div><form id="chatform" class="hidden"><input id="chatin" maxlength="120" placeholder="Chat… (Enter to send, Esc to cancel)" autocomplete="off"></form></div>
+  <div id="chatbox"><div id="log"></div><form id="chatform" class="hidden"><input id="chatin" maxlength="120" placeholder="Chat… (Enter to send, Esc to cancel)" autocomplete="off"><button class="touch green" type="submit">Send</button></form></div>
   <div id="keys" class="tiny">WASD move · Mouse aim · Click shoot · Right-click zoom · R reload · Space jump · C crouch · Shift sprint · Tab scores · T chat · Esc menu</div>
   <!-- touch -->
   <div id="stick" class="touch"><div id="knob"></div></div>
@@ -113,7 +117,10 @@
   <button id="t-jump" class="touch tbtn grey">JUMP</button>
   <button id="t-rl" class="touch tbtn gold">R</button>
   <button id="t-cr" class="touch tbtn grey">C</button>
+  <button id="t-aim" class="touch tbtn grey">AIM</button>
   <button id="t-menu" class="touch tbtn grey">☰</button>
+  <button id="t-board" class="touch tbtn grey">🏆</button>
+  <button id="t-chat" class="touch tbtn grey">💬</button>
 </div>
 <div id="clickto" class="hidden"><div>CLICK TO PLAY<small>(mouse aims · Esc for menu)</small></div></div>
 
@@ -122,10 +129,10 @@
   <div class="card">
     <h2>PAUSED</h2>
     <p class="tiny">The match keeps going — you can still get painted!</p>
-    <label class="slider">Mouse speed <input type="range" id="sens" min="0.2" max="3" step="0.05"></label>
-    <label class="chk"><input type="checkbox" id="invy"> Invert mouse Y</label>
+    <label class="slider"><span class="kbonly">Mouse speed</span><span class="tonly">Look speed</span> <input type="range" id="sens" min="0.2" max="3" step="0.05"></label>
+    <label class="chk"><input type="checkbox" id="invy"> Invert <span class="kbonly">mouse</span><span class="tonly">look</span> Y</label>
     <div class="row"><button id="p-music" class="grey">♪ Music</button><button id="p-sfx" class="grey">🔊 Sound</button><button id="p-fs" class="grey">⛶ Full screen</button></div>
-    <div class="row"><button id="p-resume" class="big green">RESUME</button><button id="p-leave" class="red">LEAVE MATCH</button></div>
+    <div class="row actions"><button id="p-resume" class="big green">RESUME</button><button id="p-leave" class="red">LEAVE MATCH</button></div>
   </div>
 </section>
 
@@ -148,7 +155,8 @@
     <p><b>Ammo is real.</b> Your hopper holds 20 balls. Press <b>R</b> to reload from your reserve pods. Out of pods? Run to a yellow-ringed <b>PAINT +40</b> crate on the map, then it takes 14 seconds to refill.</p>
     <p><b>Hide.</b> Bunkers, containers, logs and walls stop paintballs. <b>C</b> to crouch behind low cover. Paintballs drop over distance — aim a little high far away.</p>
     <p><b>Win skins.</b> The winner of the last match wears <b>Champion Gold</b> with a crown and a gold marker. Every match you win unlocks a new skin.</p>
-    <p class="tiny">WASD move · Mouse aim · Click shoot (hold for auto) · Right-click zoom · R reload · Space jump · C crouch · Shift sprint · Tab scores · T chat · M music · Esc menu</p>
+    <p class="tiny tonly">Left thumb: move stick · Drag anywhere on the right: aim · FIRE (hold for auto, slide to keep aiming) · AIM zooms · R reload · JUMP · C crouch · 🏆 scores · 💬 chat · ☰ menu</p>
+    <p class="tiny kbonly">WASD move · Mouse aim · Click shoot (hold for auto) · Right-click zoom · R reload · Space jump · C crouch · Shift sprint · Tab scores · T chat · M music · Esc menu</p>
     <div class="row"><button class="back big green">GOT IT</button></div>
   </div>
 </section>

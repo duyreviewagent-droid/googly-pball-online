@@ -113,9 +113,11 @@ export class World {
   constructor(canvas) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance', preserveDrawingBuffer: /shot|icon/.test(location.search) });
     this.lq = /lq=1/.test(location.search);
-    this.renderer.setPixelRatio(this.lq ? 0.6 : Math.min(devicePixelRatio, 2));
+    // phones: cap the pixel ratio and use cheaper, smaller shadows
+    this.mobile = matchMedia('(pointer: coarse)').matches && 'ontouchstart' in window;
+    this.renderer.setPixelRatio(this.lq ? 0.6 : Math.min(devicePixelRatio, this.mobile ? 1.5 : 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = this.mobile ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure = 1.0;
     this.scene = new THREE.Scene();
@@ -150,7 +152,7 @@ export class World {
     L.add(hemi);
     const sun = new THREE.DirectionalLight(kind === 'dusk' ? 0xffb070 : kind === 'day' ? 0xfff4e0 : 0xfff0d8, kind === 'indoor' ? 1.4 : kind === 'dusk' ? 2.1 : 2.8);
     sun.position.set(kind === 'dusk' ? -40 : 30, kind === 'dusk' ? 22 : 60, kind === 'dusk' ? 18 : 25);
-    sun.castShadow = true; sun.shadow.mapSize.set(this.lq ? 1024 : 4096, this.lq ? 1024 : 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+    sun.castShadow = true; { const ms = this.lq ? 1024 : this.mobile ? 2048 : 4096; sun.shadow.mapSize.set(ms, ms); } sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
     const R = Math.max(map.W, map.D) * 0.62;
     Object.assign(sun.shadow.camera, { left: -R, right: R, top: R, bottom: -R, near: 1, far: 200 });
     L.add(sun); L.add(sun.target);

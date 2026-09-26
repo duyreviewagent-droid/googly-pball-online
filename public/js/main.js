@@ -35,6 +35,14 @@ function show(id) { if (id !== screen) prevScreen = screen; screen = id; for (co
 function toast(t, ms = 2400) { const e = $('toast'); e.textContent = t; e.style.opacity = 1; clearTimeout(toast.t); toast.t = setTimeout(() => e.style.opacity = 0, ms); }
 document.querySelectorAll('.back').forEach(b => b.onclick = () => { sfx.click(); show(screen === 'scr-help' ? prevScreen : 'scr-title'); });
 document.addEventListener('pointerdown', () => unlockAudio(), { capture: true });
+// iOS only lets audio start from touchend/click, and ignores user-scalable=no for pinches
+for (const ev of ['touchend', 'click']) document.addEventListener(ev, () => unlockAudio(), { capture: true, passive: true });
+for (const ev of ['gesturestart', 'gesturechange', 'dblclick']) document.addEventListener(ev, e => e.preventDefault(), { passive: false });
+if (mobile) {
+  document.addEventListener('touchmove', e => { if (e.touches.length > 1 && !G) e.preventDefault(); }, { passive: false });
+  if (!document.documentElement.requestFullscreen) $('b-fs').classList.add('hidden'), $('p-fs').classList.add('hidden');
+  $('chatin').placeholder = 'Chat…';
+}
 document.addEventListener('keydown', () => unlockAudio(), { capture: true });
 
 // title: name, colour, skins
@@ -62,6 +70,7 @@ function drawAudioBtns() { const a = audioState(); for (const id of ['b-music', 
 $('b-music').onclick = $('p-music').onclick = () => { setMusic(!audioState().music); drawAudioBtns(); };
 $('b-sfx').onclick = $('p-sfx').onclick = () => { setSfx(!audioState().sfx); drawAudioBtns(); sfx.click(); };
 drawAudioBtns();
+addEventListener('orientationchange', () => { for (const ms of [120, 400, 900]) setTimeout(() => { world.resize(); paintOv?.draw?.(); }, ms); });
 function drawInvite() {
   $('invite').classList.toggle('hidden', !pendingRoom);
   $('invite').innerHTML = `You've been invited to lobby <b>${esc(pendingRoom)}</b> — type your name and press JOIN`;
@@ -212,6 +221,7 @@ function enterMatch(m) {
   beepAt = 99;
   hidePreview();
   if (!mobile && !Q.has('bot')) askLock();
+  touchNewMatch();
   paintOv.clear();
 }
 function leaveMatch(keepRoom) {
@@ -364,7 +374,7 @@ addEventListener('keyup', e => keys.delete(e.code));
 addEventListener('blur', () => { keys.clear(); mouseL = mouseR = false; });
 const canvas = $('view');
 canvas.addEventListener('mousedown', e => {
-  if (!G) return;
+  if (!G || mobile) return;
   if (!locked && !macLocked && !mobile) { askLock(); return; }
   if (e.button === 0) mouseL = true; if (e.button === 2) mouseR = true;
 });
@@ -385,35 +395,93 @@ document.addEventListener('pointerlockchange', () => {
   else if (G && !chatting) pause();
 });
 function unlock() { if (document.pointerLockElement) document.exitPointerLock(); if (macLocked) { macLocked = false; window.webkit?.messageHandlers?.gp?.postMessage('unlock'); } }
-function pause() { if (!G) return; mouseL = mouseR = false; keys.clear(); show('scr-pause'); $('clickto').classList.add('hidden'); }
-$('p-resume').onclick = () => { sfx.click(); show(null); if (isMac) askLock(); else canvas.requestPointerLock?.(); };
+function pause() { if (!G) return; mouseL = mouseR = false; keys.clear(); touchReset(); show('scr-pause'); $('clickto').classList.add('hidden'); }
+$('p-resume').onclick = () => { sfx.click(); show(null); if (mobile) return; if (isMac) askLock(); else canvas.requestPointerLock?.(); };
 $('p-leave').onclick = () => { sfx.click(); send({ t: 'leave' }); leaveMatch(); show('scr-title'); };
 $('sens').value = prof.sens; $('sens').oninput = () => { prof.sens = +$('sens').value; store.set('sens', prof.sens); };
 $('invy').checked = prof.invy; $('invy').onchange = () => { prof.invy = $('invy').checked; store.set('invy', prof.invy); };
-function openChat() { chatting = true; keys.clear(); mouseL = false; $('chatform').classList.remove('hidden'); $('chatin').focus(); }
+function openChat() { chatting = true; keys.clear(); mouseL = false; touchReset(); $('chatform').classList.remove('hidden'); $('chatin').focus(); }
+$('chatin').addEventListener('blur', () => { if (mobile && chatting) setTimeout(() => { if (chatting && document.activeElement !== $('chatin')) closeChat(); }, 250); });
 function closeChat() { chatting = false; $('chatform').classList.add('hidden'); $('chatin').blur(); $('chatin').value = ''; }
 $('chatform').onsubmit = e => { e.preventDefault(); const t = $('chatin').value.trim(); if (t) send({ t: 'chat', text: t }); closeChat(); };
 function reload() { if (!G || !me.alive || me.reloadT > 0 || me.hopper >= S.HOPPER) return; if (me.reserve <= 0) { center('NO PAINT LEFT — FIND A CRATE', 1500, '#ff9500'); sfx.empty(); return; } send({ t: 'reload' }); }
 
-// touch controls
-const touch = { mx: 0, mz: 0, fire: false, jump: false, crouch: false, stickId: null, lookId: null, lx: 0, ly: 0 };
+// touch controls: left side = floating move stick, right side = aim by dragging,
+// FIRE can be held (auto) and slid to keep aiming, AIM / C are toggles.
+const touch = { mx: 0, mz: 0, fire: false, jump: false, crouch: false, aim: false, board: false, stickId: null, lookId: null, fireId: null, lx: 0, ly: 0, sx: 0, sy: 0, last: new Map() };
+function touchReset() {
+  if (!mobile) return;
+  touch.mx = touch.mz = 0; touch.fire = touch.jump = false; touch.stickId = touch.lookId = touch.fireId = null; touch.last.clear();
+  const st = $('stick'); st.classList.remove('live'); st.style.left = st.style.top = st.style.bottom = ''; $('knob').style.transform = '';
+  for (const b of document.querySelectorAll('.tbtn.down')) b.classList.remove('down');
+}
 if (mobile) {
   const stick = $('stick'), knob = $('knob');
-  stick.addEventListener('touchstart', e => { touch.stickId = e.changedTouches[0].identifier; e.preventDefault(); }, { passive: false });
-  addEventListener('touchmove', e => {
+  const inPlay = () => G && screen === null && !chatting;
+  const stickStart = t => {
+    touch.stickId = t.identifier;
+    // the stick base jumps under the thumb (kept on screen), so you never have to find it
+    const R = stick.offsetWidth / 2, x = Math.max(R + 4, Math.min(innerWidth * 0.5, t.clientX)), y = Math.max(R + 4, Math.min(innerHeight - R - 4, t.clientY));
+    touch.sx = x; touch.sy = y;
+    stick.style.left = x - R + 'px'; stick.style.top = y - R + 'px'; stick.style.bottom = 'auto'; stick.classList.add('live');
+    stickMove(t);
+  };
+  const stickMove = t => {
+    const R = stick.offsetWidth / 2, dx = (t.clientX - touch.sx) / R, dy = (t.clientY - touch.sy) / R, l = Math.min(1, Math.hypot(dx, dy)), a = Math.atan2(dy, dx);
+    const dead = l < 0.12 ? 0 : (l - 0.12) / 0.88;
+    touch.mx = Math.cos(a) * dead; touch.mz = -Math.sin(a) * dead;
+    knob.style.transform = `translate(${Math.cos(a) * l * R * 0.72}px, ${Math.sin(a) * l * R * 0.72}px)`;
+  };
+  const lookStart = t => { touch.lookId = t.identifier; touch.lx = t.clientX; touch.ly = t.clientY; };
+  stick.addEventListener('touchstart', e => { e.preventDefault(); if (inPlay() && touch.stickId === null) stickStart(e.changedTouches[0]); }, { passive: false });
+  canvas.addEventListener('touchstart', e => {
+    if (!inPlay()) return;
+    e.preventDefault();
     for (const t of e.changedTouches) {
-      if (t.identifier === touch.stickId) { const r = stick.getBoundingClientRect(), dx = (t.clientX - r.left - r.width / 2) / (r.width / 2), dy = (t.clientY - r.top - r.height / 2) / (r.height / 2), l = Math.min(1, Math.hypot(dx, dy)), a = Math.atan2(dy, dx); touch.mx = Math.cos(a) * l; touch.mz = -Math.sin(a) * l; knob.style.left = 45 + Math.cos(a) * l * 45 + 'px'; knob.style.top = 45 + Math.sin(a) * l * 45 + 'px'; }
-      if (t.identifier === touch.lookId) { look.dx += (t.clientX - touch.lx) * 2.2; look.dy += (t.clientY - touch.ly) * 2.2; touch.lx = t.clientX; touch.ly = t.clientY; }
+      if (t.clientX < innerWidth * 0.4) { if (touch.stickId === null) stickStart(t); }
+      else if (touch.lookId === null) lookStart(t);
     }
   }, { passive: false });
-  addEventListener('touchend', e => { for (const t of e.changedTouches) { if (t.identifier === touch.stickId) { touch.stickId = null; touch.mx = touch.mz = 0; knob.style.left = knob.style.top = '45px'; } if (t.identifier === touch.lookId) touch.lookId = null; } });
-  canvas.addEventListener('touchstart', e => { const t = e.changedTouches[0]; if (t.clientX > innerWidth * 0.35) { touch.lookId = t.identifier; touch.lx = t.clientX; touch.ly = t.clientY; } }, { passive: true });
-  const hold = (id, k) => { const b = $(id); b.addEventListener('touchstart', e => { e.preventDefault(); touch[k] = true; const t = e.changedTouches[0]; if (k === 'fire' && touch.lookId === null) { touch.lookId = t.identifier; touch.lx = t.clientX; touch.ly = t.clientY; } }, { passive: false }); b.addEventListener('touchend', () => { touch[k] = false; }); };
-  hold('t-fire', 'fire'); hold('t-jump', 'jump');
-  $('t-cr').addEventListener('touchstart', e => { e.preventDefault(); touch.crouch = !touch.crouch; }, { passive: false });
-  $('t-rl').addEventListener('touchstart', e => { e.preventDefault(); reload(); }, { passive: false });
-  $('t-menu').addEventListener('touchstart', e => { e.preventDefault(); pause(); }, { passive: false });
+  addEventListener('touchmove', e => {
+    for (const t of e.changedTouches) {
+      touch.last.set(t.identifier, [t.clientX, t.clientY]);
+      if (t.identifier === touch.stickId) stickMove(t);
+      if (t.identifier === touch.lookId) { look.dx += (t.clientX - touch.lx) * 2.1; look.dy += (t.clientY - touch.ly) * 2.1; touch.lx = t.clientX; touch.ly = t.clientY; }
+    }
+    if (G && screen === null && e.cancelable) e.preventDefault();
+  }, { passive: false });
+  const touchEnd = e => {
+    for (const t of e.changedTouches) {
+      touch.last.delete(t.identifier);
+      if (t.identifier === touch.stickId) { touch.stickId = null; touch.mx = touch.mz = 0; knob.style.transform = ''; stick.classList.remove('live'); stick.style.left = stick.style.top = stick.style.bottom = ''; }
+      if (t.identifier === touch.fireId) { touch.fireId = null; touch.fire = false; $('t-fire').classList.remove('down'); }
+      if (t.identifier === touch.lookId) {
+        look.dx += (t.clientX - touch.lx) * 2.1; look.dy += (t.clientY - touch.ly) * 2.1; // last bit of the swipe
+        touch.lookId = null;
+        // if FIRE is still held, that finger takes over aiming
+        const f = touch.fireId !== null && touch.last.get(touch.fireId);
+        if (f) { touch.lookId = touch.fireId; touch.lx = f[0]; touch.ly = f[1]; }
+      }
+    }
+  };
+  addEventListener('touchend', touchEnd); addEventListener('touchcancel', touchEnd);
+  const btn = (id, down, up) => {
+    const b = $(id);
+    b.addEventListener('touchstart', e => { e.preventDefault(); e.stopPropagation(); b.classList.add('down'); down(e.changedTouches[0], b); }, { passive: false });
+    const end = () => { b.classList.remove('down'); up?.(b); };
+    b.addEventListener('touchend', end); b.addEventListener('touchcancel', end);
+  };
+  btn('t-fire', t => { touch.fire = true; touch.fireId = t.identifier; touch.last.set(t.identifier, [t.clientX, t.clientY]); if (touch.lookId === null) lookStart(t); });
+  btn('t-jump', () => { touch.jump = true; }, () => { touch.jump = false; });
+  btn('t-cr', (t, b) => { touch.crouch = !touch.crouch; b.classList.toggle('on', touch.crouch); });
+  btn('t-aim', (t, b) => { touch.aim = !touch.aim; b.classList.toggle('on', touch.aim); });
+  btn('t-rl', () => reload());
+  btn('t-menu', () => { unlockAudio(); pause(); });
+  btn('t-board', (t, b) => { touch.board = !touch.board; b.classList.toggle('on', touch.board); });
+  btn('t-chat', () => { }, () => openChat()); // on touchend so iOS opens the keyboard
+  $('board').addEventListener('touchstart', e => { e.preventDefault(); touch.board = false; $('t-board').classList.remove('on'); }, { passive: false });
 }
+function touchNewMatch() { if (!mobile) return; touchReset(); touch.aim = touch.crouch = touch.board = false; for (const id of ['t-aim', 't-cr', 't-board']) $(id).classList.remove('on'); }
 
 // ------------------------------------------------------------------ local player
 const V = new THREE.Vector3(), V2 = new THREE.Vector3(), V3 = new THREE.Vector3();
@@ -426,7 +494,7 @@ function localInput(dt) {
     mx: (k('KeyD') || k('ArrowRight') ? 1 : 0) - (k('KeyA') || k('ArrowLeft') ? 1 : 0) + touch.mx,
     mz: (k('KeyW') || k('ArrowUp') ? 1 : 0) - (k('KeyS') || k('ArrowDown') ? 1 : 0) + touch.mz,
     jump: k('Space') || touch.jump, sprint: k('ShiftLeft') || k('ShiftRight'), crouch: k('KeyC') || k('ControlLeft') || touch.crouch,
-    fire: mouseL || touch.fire, aim: mouseR,
+    fire: mouseL || touch.fire, aim: mouseR || touch.aim,
   };
   if (inp.aim || inp.crouch) inp.sprint = false;
   return inp;
@@ -561,7 +629,9 @@ function updateCamera(dt) {
   world.camera.position.copy(camPos);
   const lookAt = camPos.clone().addScaledVector(fwd, 10); lookAt.y += me.kick * 10;
   world.camera.lookAt(lookAt);
-  world.camera.fov += ((mobile ? 72 : 70) - 24 * ak - world.camera.fov) * (1 - Math.exp(-14 * dt));
+  // phones held upright get a taller vertical FOV so the sideways view isn't a keyhole
+  const baseFov = mobile ? (world.camera.aspect < 1 ? 2 * Math.atan(Math.tan(36 * Math.PI / 180) / Math.sqrt(world.camera.aspect)) * 180 / Math.PI : 72) : 70;
+  world.camera.fov += (baseFov * (1 - 0.34 * ak) - world.camera.fov) * (1 - Math.exp(-14 * dt));
   world.camera.updateProjectionMatrix();
   setListener(camPos.x, camPos.y, camPos.z, me.yaw);
 }
@@ -605,7 +675,7 @@ function updateHUD(dt) {
   let pr = '';
   if (me.alive && G.state === 'play') {
     if (me.hopper === 0 && me.reserve === 0) pr = 'Out of paint! Grab a yellow PAINT +40 crate';
-    else if (me.hopper <= 4 && me.reserve > 0 && me.reloadT <= 0) pr = 'Press R to reload';
+    else if (me.hopper <= 4 && me.reserve > 0 && me.reloadT <= 0) pr = mobile ? 'Tap R to reload' : 'Press R to reload';
   }
   $('prompt').textContent = pr;
   if (!me.alive) { const k = me.killer && G.ents.get(me.killer); $('dead-t').textContent = (k && k.alive ? `Watching ${k.name} · ` : '') + (me.deadT > 0 ? `back in ${Math.ceil(me.deadT)}…` : 'respawning…'); }
@@ -619,7 +689,7 @@ function updateHUD(dt) {
   const top = list.slice(0, 5); if (!top.find(e => e.id === myId)) { const m = list.find(e => e.id === myId); if (m) top.push(m); }
   const lim = G.settings.score ? ` / ${G.settings.score}` : '';
   $('mini').innerHTML = `<small style="opacity:.7;font-size:10px;letter-spacing:1.5px">TAGS${lim}</small>` + top.map(e => `<div class="${e.id === myId ? 'me' : ''}"><span class="n"><span class="dot" style="background:${esc(e.color)}"></span>${e.champ ? '👑' : ''}${esc(e.name)}</span><b>${e.score}</b></div>`).join('');
-  const showBoard = keys.has('Tab');
+  const showBoard = keys.has('Tab') || touch.board;
   $('board').classList.toggle('hidden', !showBoard);
   if (showBoard) $('board').innerHTML = `<table><tr><th>GOOGLY</th><th class="r">TAGS</th><th class="r">PAINTED</th><th class="r">PING</th></tr>${list.map(e => `<tr class="${e.id === myId ? 'me' : ''}"><td><span class="dot" style="background:${esc(e.color)}"></span> ${e.champ ? '👑 ' : ''}${esc(e.name)}${e.bot ? ' <small>(CPU)</small>' : ''}</td><td class="r">${e.score}</td><td class="r">${e.deaths}</td><td class="r">${e.id === myId ? Math.round(rtt * 1000) + 'ms' : e.bot ? '—' : ''}</td></tr>`).join('')}</table><p class="tiny">${esc(MAPS[G.mapId].name)} · lobby ${esc(room?.code || '')}</p>`;
   paintOv.update(dt);
@@ -691,5 +761,5 @@ function frame() {
 if (!Q.has('icon')) { showPreview(); connect(); frame(); }
 
 // test hooks
-window.__gp = { get G() { return G; }, me, world, send, get room() { return room; } };
+window.__gp = { get G() { return G; }, me, world, send, get room() { return room; }, touch, get screen() { return screen; }, mobile };
 if (Q.has('icon')) import('./icon.js').then(m => m.renderIcon(world));

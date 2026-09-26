@@ -108,15 +108,6 @@ h2 { font-family: "Futura", "Arial Black", sans-serif; color: #7dff9a; margin: 0
 .stand .n { display: flex; gap: 8px; align-items: center; } .stand .r { text-align: right; } .stand.head { background: none; font-size: 11px; opacity: .7; letter-spacing: 1px; }
 .help p { text-align: left; line-height: 1.45; }
 #toast { position: fixed; left: 50%; top: 14%; transform: translateX(-50%); z-index: 40; background: #000c; border: 2px solid #7dff9a; border-radius: 14px; padding: 10px 20px; font-weight: 800; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 92vw; text-align: center; }
-/* touch */
-.touch { display: none; }
-body.mobile .touch { display: block; } body.mobile #keys { display: none; }
-#stick { position: absolute; left: 30px; bottom: 110px; width: 140px; height: 140px; border-radius: 50%; background: #ffffff18; border: 2px solid #ffffff44; pointer-events: auto; }
-#knob { position: absolute; left: 45px; top: 45px; width: 50px; height: 50px; border-radius: 50%; background: #ffffff77; }
-.tbtn { position: absolute; pointer-events: auto; border-radius: 50%; width: 64px; height: 64px; padding: 0; font-size: 14px; opacity: .85; }
-#t-fire { right: 40px; bottom: 150px; width: 96px; height: 96px; font-size: 18px; }
-#t-jump { right: 150px; bottom: 110px; } #t-rl { right: 40px; bottom: 260px; } #t-cr { right: 150px; bottom: 190px; } #t-menu { right: 12px; top: 12px; width: 44px; height: 44px; }
-body.mobile #mini { top: 64px; } body.mobile #chatbox { display: none; }
 @media (max-width: 720px) {
   .lobbycols { grid-template-columns: 1fr; } .maps { grid-template-columns: 1fr 1fr 1fr; } .mapc small { display: none; }
   .bigcode { font-size: 40px; } #mini { font-size: 11px; min-width: 120px; } #paintbar { width: 150px; } #ammo b { font-size: 32px; }
@@ -130,3 +121,105 @@ body.mobile #mini { top: 64px; } body.mobile #chatbox { display: none; }
 #skins { grid-template-columns: repeat(7, 1fr); gap: 4px; }
 .skin { padding: 5px 2px; font-size: 10px; } .skin small { font-size: 8.5px; } .skin i { width: 22px; height: 22px; }
 @media (max-width: 900px) { #scr-title { justify-content: center; padding-left: 16px; background: radial-gradient(#0a2a14aa, #020a05dd); } #skins { grid-template-columns: repeat(4, 1fr); } }
+
+/* title columns: invisible on desktop, side by side on short landscape phones */
+.tcol { display: contents; }
+.tonly { display: none; }
+
+/* ------------------------------------------------------------ touch devices */
+body.mobile { --sl: env(safe-area-inset-left, 0px); --sr: env(safe-area-inset-right, 0px); --st: env(safe-area-inset-top, 0px); --sb: env(safe-area-inset-bottom, 0px); overscroll-behavior: none; -webkit-touch-callout: none; -webkit-text-size-adjust: 100%; }
+body.mobile .tonly { display: inline; } body.mobile p.tonly { display: block; } body.mobile .kbonly { display: none; }
+body.mobile #view { width: 100%; height: 100%; }
+body.mobile button, body.mobile .skin, body.mobile .mapc, body.mobile #swatches div { touch-action: manipulation; }
+body.mobile button { min-height: 44px; } body.mobile button.mini { min-width: 44px; }
+body.mobile input, body.mobile select { font-size: 16px; min-height: 44px; }
+body.mobile .card, body.mobile #rooms, body.mobile #lb-log, body.mobile #board { touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+body.mobile .screen { padding: calc(8px + var(--st)) calc(10px + var(--sr)) calc(8px + var(--sb)) calc(10px + var(--sl)); }
+body.mobile .card { max-height: 100%; }
+body.mobile .card .actions { position: sticky; bottom: 0; margin: 12px -24px 0; padding: 10px 24px; background: #06100a; box-shadow: 0 -8px 10px #06100a; z-index: 3; }
+body.mobile #swatches div { width: 40px; height: 40px; }
+body.mobile .chk input { width: 24px; height: 24px; }
+body.mobile .slider input { flex: 1; min-width: 0; max-width: 260px; height: 32px; }
+/* touch HUD */
+.touch { display: none; }
+body.mobile .touch { display: block; } body.mobile #keys { display: none; }
+#stick { position: absolute; left: calc(28px + var(--sl)); bottom: calc(28px + var(--sb)); width: 130px; height: 130px; border-radius: 50%; background: #ffffff14; border: 2px solid #ffffff44; pointer-events: auto; transition: opacity .2s; }
+#stick.live { background: #ffffff22; transition: none; }
+#knob { position: absolute; left: 38px; top: 38px; width: 50px; height: 50px; border-radius: 50%; background: #ffffff88; box-shadow: 0 2px 8px #0006; }
+.tbtn { position: absolute; pointer-events: auto; border-radius: 50%; width: 58px; height: 58px; min-height: 0 !important; padding: 0; font-size: 13px; opacity: .82; touch-action: none !important; }
+.tbtn.on { background: #1f8a3a; border-color: #7dff9a; opacity: 1; box-shadow: 0 0 12px #7dff9a88; }
+.tbtn.down { filter: brightness(1.35); transform: scale(.94); }
+#t-fire { right: calc(22px + var(--sr)); bottom: calc(30px + var(--sb)); width: 92px; height: 92px; font-size: 18px; }
+#t-aim { right: calc(34px + var(--sr)); bottom: calc(134px + var(--sb)); }
+#t-rl { right: calc(104px + var(--sr)); bottom: calc(160px + var(--sb)); }
+#t-cr { right: calc(128px + var(--sr)); bottom: calc(88px + var(--sb)); }
+#t-jump { right: calc(126px + var(--sr)); bottom: calc(18px + var(--sb)); }
+#t-menu, #t-board, #t-chat { left: calc(8px + var(--sl)); width: 46px; height: 46px; font-size: 18px; border-radius: 14px; }
+#t-menu { top: calc(8px + var(--st)); } #t-board { top: calc(60px + var(--st)); } #t-chat { top: calc(112px + var(--st)); }
+body.mobile #timer { top: calc(8px + var(--st)); font-size: 18px; padding: 5px 12px; min-width: 70px; border-radius: 11px; }
+body.mobile #paintbar { left: 50%; transform: translateX(-50%); top: calc(46px + var(--st)); bottom: auto; width: 150px; padding: 4px 10px; border-radius: 10px; }
+body.mobile #paintbar small, body.mobile #ammo small { font-size: 8px; letter-spacing: 1px; }
+body.mobile #paintbar .bar { height: 7px; margin-top: 3px; }
+body.mobile #mini { top: calc(8px + var(--st)); right: calc(8px + var(--sr)); font-size: 11px; min-width: 116px; padding: 5px 10px; border-radius: 11px; }
+body.mobile #mini div { gap: 6px; } body.mobile #mini span.n { max-width: 84px; }
+body.mobile #ammo { right: auto; left: 50%; transform: translateX(-50%); bottom: calc(10px + var(--sb)); min-width: 0; padding: 4px 12px; border-radius: 11px; text-align: center; }
+body.mobile #ammo b { font-size: 30px; } body.mobile #ammo span { font-size: 15px; }
+body.mobile #feed { right: auto; left: calc(62px + var(--sl)); top: calc(8px + var(--st)); align-items: flex-start; max-width: min(300px, 34vw); }
+body.mobile #feed div { font-size: 11px; padding: 3px 8px; } body.mobile #feed div:nth-child(n+5) { display: none; }
+body.mobile #chatbox { left: calc(62px + var(--sl)); top: calc(116px + var(--st)); bottom: auto; width: min(300px, 34vw); pointer-events: none; }
+body.mobile #log { max-height: 64px; font-size: 11px; }
+body.mobile #chatform { position: fixed; left: 50%; top: calc(10px + var(--st)); transform: translateX(-50%); width: min(460px, calc(100vw - 20px)); display: flex; gap: 6px; pointer-events: auto; z-index: 30; background: #000c; padding: 8px; border-radius: 14px; }
+body.mobile #chatform.hidden { display: none; } body.mobile #chatform input { margin: 0; flex: 1; min-width: 0; } body.mobile #chatform button { min-height: 44px; }
+body.mobile #board { pointer-events: auto; max-height: calc(100% - 20px); overflow: auto; padding: 10px 12px; font-size: 13px; }
+body.mobile #board td, body.mobile #board th { padding: 4px 6px; }
+body.mobile #prompt { top: 62%; font-size: 15px; }
+body.mobile #center { font-size: clamp(24px, 6vw, 48px); }
+body.mobile #dead h2 { font-size: clamp(24px, 6vw, 44px); } body.mobile #dead p { font-size: 15px; }
+@media (orientation: portrait) {
+  body.mobile #ammo { left: calc(22px + var(--sl)); transform: none; bottom: calc(172px + var(--sb)); }
+  body.mobile #feed { left: auto; right: calc(8px + var(--sr)); top: calc(140px + var(--st)); align-items: flex-end; max-width: 48vw; }
+  body.mobile #chatbox { left: calc(8px + var(--sl)); top: calc(166px + var(--st)); width: 48vw; }
+  body.mobile #paintbar { width: 120px; }
+}
+/* menus on phones */
+@media (max-width: 560px) {
+  .row.play { flex-wrap: nowrap; } .row.play button.big { flex: 1; font-size: 17px; padding: 12px 6px; }
+  .row.opts { display: grid; grid-template-columns: 1fr 1fr; } .row.opts button { font-size: 14px; padding: 9px 6px; }
+  .card { padding: 16px 14px; } body.mobile .card .actions { margin: 12px -14px 0; padding: 10px 14px; }
+  h2 { font-size: 24px; }
+  .grid2 { gap: 6px; }
+  .bigcode { font-size: 34px; letter-spacing: 6px; }
+  .lobbytop { justify-content: center; text-align: center; }
+  .roomrow { padding: 8px 10px; }
+  #scr-title .card { padding: 16px 14px; }
+  #scr-title h1 { font-size: clamp(26px, 9vw, 44px); }
+  #scr-title .sub { font-size: 13px; margin: 4px 0 10px; }
+  .skin small { font-size: 9px; }
+}
+@media (max-height: 520px) and (orientation: landscape) {
+  .card { padding: 12px 16px; border-radius: 16px; } body.mobile .card .actions { margin: 8px -16px 0; padding: 8px 16px; }
+  h2 { font-size: 22px; margin-bottom: 6px; } .sub { margin: 4px 0 8px; } .tiny { margin-top: 6px; }
+  .row { margin-top: 8px; }
+  button.big { font-size: 17px; padding: 9px 22px; }
+  button { padding: 8px 12px; }
+  .maps { gap: 8px; margin: 4px 0; } .mapc { padding: 6px; } .mapc canvas { height: 46px; } .mapc small { display: none; }
+  .grid2 { grid-template-columns: repeat(4, 1fr); margin: 6px 0; }
+  .bigcode { font-size: 32px; letter-spacing: 6px; }
+  #lb-log { height: 64px; } .pl { padding: 4px 8px; }
+  .lobbycols { gap: 12px; }
+  #rooms { max-height: none; }
+  /* title: name + colours on the left, skins + buttons on the right */
+  #scr-title { justify-content: center; padding-left: calc(10px + env(safe-area-inset-left, 0px)); background: radial-gradient(#0a2a14aa, #020a05dd); }
+  #scr-title .card { max-width: 820px; display: grid; grid-template-columns: 1fr 1.1fr; gap: 0 18px; align-items: center; padding: 12px 18px; }
+  #scr-title .tcol { display: block; min-width: 0; }
+  #scr-title h1 { font-size: clamp(28px, 5vw, 44px); white-space: nowrap; }
+  #scr-title .sub { font-size: 13px; }
+  #nm { font-size: 17px; margin-bottom: 8px; }
+  #swatches { gap: 6px; } #swatches div { width: 34px !important; height: 34px !important; }
+  #scr-title .label { margin-top: 0; }
+  #skins { grid-template-columns: repeat(4, 1fr); }
+  .skin { padding: 4px 2px; } .skin small { display: none; } .skin i { width: 18px; height: 18px; margin-bottom: 2px; }
+  .row.play { flex-wrap: nowrap; margin-top: 10px; } .row.play button.big { flex: 1; padding: 8px 6px; }
+  .row.opts { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; } .row.opts button { font-size: 13px; padding: 6px; }
+  .champ { margin-top: 8px; padding: 6px; font-size: 13px; }
+}
